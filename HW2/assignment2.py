@@ -56,16 +56,13 @@ class LinearRegression_Local:   #give up on this
 
     # Function for model training         
     def fit(self, X, Y):
-        # weight initialization, W will be the weights multiplied by X 
-        self.w1 = 1
-        self.w0 = 0
-
-        # data
+        # initialize necessary components of linear regression variable
+        self.num_data = X.shape[0]
         self.x = X
         self.y = Y
+        self.weights = np.array([X.shape[1]])
+        self.intersect = np.array([X.shape[1]])
 
-        
-        # gradient descent learning 
         for i in range(self.iterations):
             self.update_weights()
 
@@ -73,23 +70,21 @@ class LinearRegression_Local:   #give up on this
 
     # Helper function to update weights in gradient descent      
     def update_weights(self):
-        # predict on data and calculate gradients 
-        num = self.x.shape[0]
-        y = self.predict()
-        y_err = np.array(num)
+        y_preds = self.predict(self.x)
 
-        #do RSS to see how off the predictions are from Y
-        for i in range(num):
-            y_err[i] = (self.y[i] - y[i])**2
+        errors = y_preds - self.y
 
-        #adjust weights based on the y_err
+        updated_weights = 2 * self.x.T.dot(errors) / self.num_data
+        updated_intersect = 2 * errors.mean()
 
+        self.weights = self.weights.astype('float64') - self.learning_rate * updated_weights
+        self.intersect = self.intersect.astype('float64') - self.learning_rate * updated_intersect
 
         return self
 
     # Hypothetical function  h( x )       
     def predict(self, X):
-        y = self.w1*(self.x) + self.w0
+        y = X.dot(self.weights) + self.intersect
 
         return y
 
@@ -99,7 +94,7 @@ def build_model(train_x: np.array, train_y: np.array):
         Instantiate an object of LinearRegression class, train the model object
         using training data and return the model object
     '''
-    reg = LinearRegression() #have to use the local one at some point
+    reg = LinearRegression_Local() #have to use the local one at some point
 
     train_x = np.expand_dims(train_x, axis=1)
     # train_y = np.expand_dims(train_y, axis=1)
@@ -426,8 +421,8 @@ if __name__ == "__main__":
     data_path_test    = "LinearRegression/test.csv"
     df_train, df_test = read_data(data_path_train), read_data(data_path_test)
 
-    # print(df_train.head())
-    # print(df_test.head())
+    print(df_train.head())
+    print(df_test.head())
 
     train_X, train_y, test_X, test_y = prepare_data(df_train, df_test)
 
@@ -509,7 +504,7 @@ if __name__ == "__main__":
 
     linear_optimal_threshold, log_optimal_threshold = optimal_thresholds(linear_threshold, linear_reg_fpr, linear_reg_tpr, log_threshold, log_reg_fpr, log_reg_tpr)
 
-    #print(linear_optimal_threshold, log_optimal_threshold)
+    print(linear_optimal_threshold, log_optimal_threshold)
 
     skf = stratified_k_fold_cross_validation(num_of_folds, True, final_features, final_label)
 
