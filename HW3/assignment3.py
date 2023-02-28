@@ -89,7 +89,7 @@ def train_ridge_regression(
     lambda_vals = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3]
 
 
-    for i in range(1): #change back to n when done testing
+    for i in range(n): #change back to n when done testing
         for j in range(len(lambda_vals)):        
             #train the model using the current lambda and get predictions
             ridgeReg = Ridge(alpha=lambda_vals[j], max_iter=max_iter)
@@ -135,7 +135,7 @@ def train_lasso(
     aucs = {1e-3: [], 1e-2: [], 1e-1: [], 1: [], 1e1: [], 1e2: [], 1e3: []}
     lambda_vals = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3]
 
-    for i in range(1): #change back to n when done testing
+    for i in range(n): #change back to n when done testing
         for j in range(len(lambda_vals)):        
             #train the model using the current lambda and get predictions
             lassoReg = Lasso(alpha=lambda_vals[j], max_iter=max_iter)
@@ -252,75 +252,72 @@ class Node:
         self.data = data  # data can be anything! we recommend dictionary with all variables you need
 
 
-# class TreeRegressor:
-#     @typechecked
-#     def __init__(self, data: np.ndarray, max_depth: int) -> None:
-#         self.data = (
-#             data  # last element of each row in data is the target variable
-#         )
-#         self.max_depth = max_depth  # maximum depth
-#         # YOU MAY ADD ANY OTHER VARIABLES THAT YOU NEED HERE
-#         # YOU MAY ALSO ADD FUNCTIONS **WITHIN CLASS or functions INSIDE CLASS** TO HELP YOU ORGANIZE YOUR BETTER
-#         ## YOUR CODE HERE
+class TreeRegressor:
+    @typechecked
+    def __init__(self, data: np.ndarray, max_depth: int) -> None:
+        self.data = (
+            data  # last element of each row in data is the target variable
+        )
+        self.max_depth = max_depth  # maximum depth
+        self.root_node = None #this might be wrong*******************************************
 
-#     @typechecked
-#     def build_tree(self) -> Node:
-#         """
-#         Build the tree
-#         """
-#         ######################
-#         ### YOUR CODE HERE ###
-#         ######################
-#         pass
+    @typechecked
+    def build_tree(self) -> Node:
+        """
+        Build the tree
+        """
 
-#     @typechecked
-#     def mean_squared_error(
-#         self, left_split: np.ndarray, right_split: np.ndarray
-#     ) -> float:
-#         """
-#         Calculate the mean squared error for a split dataset
-#         left split is a list of rows of a df, rightmost element is label
-#         return the sum of mse of left split and right split
-#         """
-#         ######################
-#         ### YOUR CODE HERE ###
-#         ######################
-#         pass
+        ######################
+        ### YOUR CODE HERE ###
+        ######################
+        pass
 
-#     @typechecked
-#     def split(self, node: Node, depth: int) -> None:
-#         """
-#         Do the split operation recursively
-#         """
-#         ######################
-#         ### YOUR CODE HERE ###
-#         ######################
-#         pass
+    @typechecked
+    def mean_squared_error(
+        self, left_split: np.ndarray, right_split: np.ndarray
+    ) -> float:
+        """
+        Calculate the mean squared error for a split dataset
+        left split is a list of rows of a df, rightmost element is label
+        return the sum of mse of left split and right split
+        """
+        mse = np.mean(np.square(left_split - np.mean(left_split)))
 
-#     @typechecked
-#     def get_best_split(self, data: np.ndarray) -> Node:
-#         """
-#         Select the best split point for a dataset AND create a Node
-#         """
-#         ######################
-#         ### YOUR CODE HERE ###
-#         ######################
-#         pass
+        mse += np.mean(np.square(right_split - np.mean(right_split)))
 
-#     @typechecked
-#     def one_step_split(
-#         self, index: int, value: float, data: np.ndarray
-#     ) -> Tuple[np.ndarray, np.ndarray]:
-#         """
-#         Split a dataset based on an attribute and an attribute value
-#         index is the variable to be split on (left split < threshold)
-#         returns the left and right split each as list
-#         each list has elements as `rows' of the df
-#         """
-#         ######################
-#         ### YOUR CODE HERE ###
-#         ######################
-#         pass
+        return mse
+
+    @typechecked
+    def split(self, node: Node, depth: int) -> None:
+        """
+        Do the split operation recursively
+        """
+        ######################
+        ### YOUR CODE HERE ###
+        ######################
+        pass
+
+    @typechecked
+    def get_best_split(self, data: np.ndarray) -> Node:
+        """
+        Select the best split point for a dataset AND create a Node
+        """
+
+
+    @typechecked
+    def one_step_split(
+        self, index: int, value: float, data: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Split a dataset based on an attribute and an attribute value
+        index is the variable to be split on (left split < threshold)
+        returns the left and right split each as list
+        each list has elements as `rows' of the df
+        """
+        ######################
+        ### YOUR CODE HERE ###
+        ######################
+        pass
 
 
 # @typechecked
@@ -383,59 +380,59 @@ class Node:
 
 if __name__ == "__main__":
     # Question 1
-    filename = "Hitters.csv"  # Provide the path of the dataset
-    df = read_data(filename)
-    lambda_vals = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3]
-    max_iter = 1e8
-    final_features, final_label = data_preprocess(df)
-    x_train, x_test, y_train, y_test = data_split(
-        final_features, final_label, 0.2
-    )
-    ridge_mean_acu = train_ridge_regression(x_train, y_train, x_test, y_test)
-    lasso_mean_acu = train_lasso(x_train, y_train, x_test, y_test)
-    model_R, ridge_coeff = ridge_coefficients(x_train, y_train, 10)
-    model_L, lasso_coeff = lasso_coefficients(x_train, y_train, 0.1)
+    # filename = "Hitters.csv"  # Provide the path of the dataset
+    # df = read_data(filename)
+    # lambda_vals = [1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3]
+    # max_iter = 1e8
+    # final_features, final_label = data_preprocess(df)
+    # x_train, x_test, y_train, y_test = data_split(
+    #     final_features, final_label, 0.2
+    # )
+    # ridge_mean_acu = train_ridge_regression(x_train, y_train, x_test, y_test)
+    # lasso_mean_acu = train_lasso(x_train, y_train, x_test, y_test)
+    # model_R, ridge_coeff = ridge_coefficients(x_train, y_train, 10)
+    # model_L, lasso_coeff = lasso_coefficients(x_train, y_train, 0.1)
     
-    ridge_auc = ridge_area_under_curve(model_R, x_test, y_test)
-    print("The area under curve measurement for Ridge Regression is", ridge_auc)
+    # ridge_auc = ridge_area_under_curve(model_R, x_test, y_test)
+    # print("The area under curve measurement for Ridge Regression is", ridge_auc)
 
-    # # Plot the ROC curve of the Ridge Model. Include axes labels,
-    # # legend and title in the Plot. Any of the missing
-    # # items in plot will result in loss of points.
+    # # # Plot the ROC curve of the Ridge Model. Include axes labels,
+    # # # legend and title in the Plot. Any of the missing
+    # # # items in plot will result in loss of points.
 
-    #mostly ripped off from hw2
-    #get tpr and fpr using roc_score function
-    ridge_reg_pred = model_R.predict(x_test)
-    ridge_reg_fpr, ridge_reg_tpr, ridge_threshold = roc_curve(y_test, ridge_reg_pred)
+    # #mostly ripped off from hw2
+    # #get tpr and fpr using roc_score function
+    # ridge_reg_pred = model_R.predict(x_test)
+    # ridge_reg_fpr, ridge_reg_tpr, ridge_threshold = roc_curve(y_test, ridge_reg_pred)
 
-    plt.plot(ridge_reg_fpr, ridge_reg_tpr, label='Ridge')
-    plt.xlabel("FPR")
-    plt.ylabel("TPR")
-    plt.title("Ridge Regression ROC Curve")
-    plt.legend(loc='lower right')
-    plt.show()
+    # plt.plot(ridge_reg_fpr, ridge_reg_tpr, label='Ridge')
+    # plt.xlabel("FPR")
+    # plt.ylabel("TPR")
+    # plt.title("Ridge Regression ROC Curve")
+    # plt.legend(loc='lower right')
+    # plt.show()
 
-    lasso_auc = lasso_area_under_curve(model_L, x_test, y_test)
-    print("The area under curve measurement for Lasso Regression is", lasso_auc)
+    # lasso_auc = lasso_area_under_curve(model_L, x_test, y_test)
+    # print("The area under curve measurement for Lasso Regression is", lasso_auc)
 
-    # # Plot the ROC curve of the Lasso Model.
-    # # Include axes labels, legend and title in the Plot.
-    # # Any of the missing items in plot will result in loss of points.
+    # # # Plot the ROC curve of the Lasso Model.
+    # # # Include axes labels, legend and title in the Plot.
+    # # # Any of the missing items in plot will result in loss of points.
 
-    #mostly ripped off from hw2
-    #get tpr and fpr using roc_score function
-    lasso_reg_pred = model_L.predict(x_test)
-    lasso_reg_fpr, lasso_reg_tpr, lasso_threshold = roc_curve(y_test, lasso_reg_pred)
+    # #mostly ripped off from hw2
+    # #get tpr and fpr using roc_score function
+    # lasso_reg_pred = model_L.predict(x_test)
+    # lasso_reg_fpr, lasso_reg_tpr, lasso_threshold = roc_curve(y_test, lasso_reg_pred)
 
-    plt.plot(lasso_reg_fpr, lasso_reg_tpr, label='Lasso')
-    plt.xlabel("FPR")
-    plt.ylabel("TPR")
-    plt.title("Lasso Regression ROC Curve")
-    plt.legend(loc='lower right')
-    plt.show()
+    # plt.plot(lasso_reg_fpr, lasso_reg_tpr, label='Lasso')
+    # plt.xlabel("FPR")
+    # plt.ylabel("TPR")
+    # plt.title("Lasso Regression ROC Curve")
+    # plt.legend(loc='lower right')
+    # plt.show()
 
     # # SUB Q1
-    data_regress = np.loadtxt(csvname, delimiter=",")
+    data_regress = np.loadtxt("noisy_sin_subsample_2.csv", delimiter=",")
     data_regress = np.array([[x, y] for x, y in zip(*data_regress)])
     plt.figure()
     plt.scatter(data_regress[:, 0], data_regress[:, 1])
@@ -443,22 +440,19 @@ if __name__ == "__main__":
     plt.ylabel("Target values, y")
     plt.show()
 
-    # mse_depths = []
-    # for depth in range(1, 5):
-    #     regressor = TreeRegressor(data_regress, depth)
-    #     tree = regressor.build_tree()
-    #     mse = 0.0
-    #     for data_point in data_regress:
-    #         mse += (
-    #             data_point[1]
-    #             - predict(tree, data_point, compare_node_with_threshold)
-    #         ) ** 2
-    #     mse_depths.append(mse / len(data_regress))
-    # plt.figure()
-    # plt.plot(mse_depths)
-    # plt.xlabel("Depth")
-    # plt.ylabel("MSE")
-    # plt.show()
+    mse_depths = []
+    for depth in range(1, 5):
+        regressor = TreeRegressor(data_regress, depth)
+        tree = regressor.build_tree()
+        mse = 0.0
+        for data_point in data_regress:
+            mse += (data_point[1] - predict(tree, data_point, compare_node_with_threshold)) ** 2
+        mse_depths.append(mse / len(data_regress))
+    plt.figure()
+    plt.plot(mse_depths)
+    plt.xlabel("Depth")
+    plt.ylabel("MSE")
+    plt.show()
 
     # # SUB Q2
     # csvname = "new_circle_data.csv"  # Place the CSV file in the same directory as this notebook
