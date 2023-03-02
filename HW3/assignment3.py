@@ -262,7 +262,7 @@ class TreeRegressor:
             data  # last element of each row in data is the target variable
         )
         self.max_depth = max_depth  # maximum depth
-        self.root_node = None 
+        self.root_node = Node(0, self.data)
 
 
     #adding this to see how the tree looks after being created
@@ -286,7 +286,6 @@ class TreeRegressor:
         """
         #get the initial best split for the data so root node has a value
         #self.root_node = self.get_best_split(self.data)
-        self.root_node = Node(0, self.data)
 
         # print(self.root_node.left.data.shape[0])
         # print(self.root_node.right.data.shape[0])
@@ -463,17 +462,16 @@ def predict(
     #node represents the root node of the tree, row represents the (x,y) value from the data and the comparator calls the compare function
 
     #if there is no left and right nodes then 
-    # if (node.left == None and node.right == None):
-    #     #need to return the average of the values in the node
-    #     return np.mean(node.data[:,1])
+    if (node.left == None and node.right == None):
+        #need to return the average of the values in the node
+        return np.mean(node.data[:,1])
     
-    # elif (comparator(node, row)):
-    #     predict(node.right, row, comparator)
+    elif (comparator(node, row)):
+        predict(node.right, row, comparator)
 
-    # else:
-    #     predict(node.left, row, comparator)
+    else:
+        predict(node.left, row, comparator)
 
-    return 0.0
     
 
 
