@@ -360,7 +360,7 @@ class TreeRegressor:
         split_index = 0
         feature_index = 0
         best_mse = 1000.0
-
+        
         temp_mse = 0.0
 
         # start = 1
@@ -460,7 +460,7 @@ def predict(
     node: Node, row: np.ndarray, comparator: Callable[[Node, np.ndarray], bool]
 ) -> float:
     #node represents the root node of the tree, row represents the (x,y) value from the data and the comparator calls the compare function
-
+    
     #if there is no left and right nodes then 
     if (node.left == None and node.right == None):
         #need to return the average of the values in the node
