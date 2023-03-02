@@ -13,6 +13,9 @@ from sklearn.metrics import roc_auc_score
 import random
 from typeguard import typechecked
 
+#using this for testing function
+import time
+
 random.seed(42)
 np.random.seed(42)
 
@@ -259,18 +262,54 @@ class TreeRegressor:
             data  # last element of each row in data is the target variable
         )
         self.max_depth = max_depth  # maximum depth
-        self.root_node = None #this might be wrong*******************************************
+        self.root_node = None 
+
+
+    #adding this to see how the tree looks after being created
+    def treeChecker(self, node, depth) -> None:
+        print("-------------------------")
+        print("Depth: ", depth)
+        print("Split Value: ", node.split_val)
+
+        time.sleep(1)
+
+        if (node.left != None):
+            self.treeChecker(node.left, depth+1)
+
+        if (node.right != None):
+            self.treeChecker(node.right, depth+1)
 
     @typechecked
     def build_tree(self) -> Node:
         """
         Build the tree
         """
+        #get the initial best split for the data so root node has a value
+        #self.root_node = self.get_best_split(self.data)
+        self.root_node = Node(0, self.data)
 
-        ######################
-        ### YOUR CODE HERE ###
-        ######################
-        pass
+        # print(self.root_node.left.data.shape[0])
+        # print(self.root_node.right.data.shape[0])
+
+        #calling split will recursively call itself until the tree is built to the correct depth
+        self.split(self.root_node, 1)
+
+        # print(self.root_node.left.data.shape[0])
+        # print(self.root_node.right.data.shape[0])
+
+        return self.root_node
+
+        #testing stuff*****************
+        # left12 = Node(0)
+        # right12 = Node(0)
+        # left22 = Node(0)
+        # right22 = Node(0)
+
+        # left1 = Node(0, self.data, left22, right22)
+        # right1 = Node(0, self.data, left12, right12)
+
+        # dummyNode = Node(0, self.data, left1, right1)
+        # return dummyNode
 
     @typechecked
     def mean_squared_error(
@@ -281,27 +320,111 @@ class TreeRegressor:
         left split is a list of rows of a df, rightmost element is label
         return the sum of mse of left split and right split
         """
-        mse = np.mean(np.square(left_split - np.mean(left_split)))
+        #check if either of the splits is empty or else np.mean gives me errors
+        if len(left_split) == 0 or len(right_split) == 0:
+            return 1000.0
 
-        mse += np.mean(np.square(right_split - np.mean(right_split)))
+        mse = np.mean(np.square(left_split[:, -1] - np.mean(left_split[:, -1]))) + np.mean(np.square(right_split[:, -1] - np.mean(right_split[:, -1])))
+
+        #print(mse)
 
         return mse
+    
 
     @typechecked
     def split(self, node: Node, depth: int) -> None:
         """
         Do the split operation recursively
         """
-        ######################
-        ### YOUR CODE HERE ###
-        ######################
-        pass
+        #check if the depth is 0. This will the the stopping case
+        if (depth == self.max_depth):
+            return
+        
+
+        #split the data and save the resulting node into splittedNode
+        tempnode = self.get_best_split(node, node.data)
+
+        node.left = tempnode.left
+        node.right = tempnode.right
+        node.split_val = tempnode.split_val
+
+        #print("Node at depth", depth, " has split and the data in its child nodes is", node.left.data.shape[0], "for the left and", node.right.data.shape[0], "for the right.")
+
+        #increment the depth so when the next recursive call is made it has the updated depth
+        depth += 1
+
+        # print("left: ", node.left.data.shape)
+        # print("right: ", node.right.data.shape)
+
+        #call split again. This will split the left and right node until the depth is reached
+        self.split(node.left, depth)
+        self.split(node.right, depth)
+
 
     @typechecked
-    def get_best_split(self, data: np.ndarray) -> Node:
+    def get_best_split(self, node: Node, data: np.ndarray) -> Node:
         """
         Select the best split point for a dataset AND create a Node
         """
+        #doing the first split to get a base score to compare as I loop
+        # left_best, right_best = self.one_step_split(0, data[0, 0], data)
+        # best_mse = self.mean_squared_error(left_best, right_best)
+
+        left_best = np.empty((1, data.shape[1]))
+        right_best = np.empty((1, data.shape[1]))
+        split_index = 0
+        feature_index = 0
+        best_mse = 1000.0
+
+        temp_mse = 0.0
+
+        # start = 1
+
+        #check if either the left temp or right temp have a length of 0, if so move on to next iteration
+        # if (len(left_best) == 0 or len(right_best) == 0):
+        #     left_best, right_best = self.one_step_split(1, data[1, 0], data)
+        #     start = 2
+        #     split_index = 1
+
+        for i in range(data.shape[1]-1): #this loop is only necessary when there is more than one feature
+            for j in range(data.shape[0]):
+                #make temp values
+                # print("j is: ", j)
+                # print("data is:", data[j,i])
+                left_temp, right_temp = self.one_step_split(i, data[j,i], data)
+                temp_mse = self.mean_squared_error(left_temp, right_temp)
+
+
+                #check if either the left temp or right temp have a length of 0, if so move on to next iteration
+                #print("came back to the get_best_split function")
+                if (len(left_temp) == 0 or len(right_temp) == 0):
+                    #print("there was 0 in left or right split")
+                    continue
+                
+                # print("---------------------------")
+                # print("testing mse: ", temp_mse)
+                # print("best mse: ", best_mse)
+                #check if this index yields a better mse and replace if so
+                if (temp_mse < best_mse):
+                    best_mse = temp_mse
+                    feature_index = i
+                    split_index = j
+                    left_best = left_temp
+                    right_best = right_temp
+            
+
+        #make the left and right node of the node that will be returned. These will be used in the next iteration of split
+        left_node = Node(split_val=0, data=left_best, left=None, right=None)
+        right_node = Node(split_val=0, data=right_best, left=None, right=None)
+
+        # print("left", left_best)
+        # print("right", right_best)
+
+        node = Node(data[split_index, feature_index], data, left_node, right_node)
+
+        return node
+
+
 
 
     @typechecked
@@ -314,68 +437,95 @@ class TreeRegressor:
         returns the left and right split each as list
         each list has elements as `rows' of the df
         """
+        left_side = np.empty((0, data.shape[1]))
+        right_side = np.empty((0, data.shape[1]))
+        
+        # print("-------------------------")
+        # print("the value is:", value)
+        # #go through the data and append based on if the data at that index is greater that or equal to or less than the given value
+        for i in range(data.shape[0]):
+            # print(data[i,index])
+            # print(data[i])
+            if(data[i,index] >= value):
+                right_side = np.append(right_side, [data[i]], axis=0)
+                # print("went right")
+            else:
+                left_side = np.append(left_side, [data[i]], axis=0)
+                # print("went left")
+            
+        
+        # print("left",left_side)
+        # print("right",right_side)
+
+        return left_side, right_side
+
+@typechecked
+def compare_node_with_threshold(node: Node, row: np.ndarray) -> bool:
+    """
+    Return True if node's value > row's value (of the variable)
+    Else False
+    """
+    if (node.split_val > row[0]):
+        return True
+    else:
+        return True
+
+
+@typechecked
+def predict(
+    node: Node, row: np.ndarray, comparator: Callable[[Node, np.ndarray], bool]
+) -> float:
+    #node represents the root node of the tree, row represents the (x,y) value from the data and the comparator calls the compare function
+
+    #if there is no left and right nodes then 
+    if (node.left == None and node.right == None):
+        #need to return the average of the values in the node
+        print(np.mean(node.data[:,1]))
+        return np.mean(node.data[:,1])
+    
+    elif (comparator(node, row)):
+        predict(node.right, row, comparator)
+
+    else:
+        predict(node.left, row, comparator)
+    
+
+
+class TreeClassifier(TreeRegressor):
+    def build_tree(self):
+        ## Note: You can remove this if you want to use build tree from Tree Regressor
         ######################
         ### YOUR CODE HERE ###
         ######################
         pass
 
+    @typechecked
+    def gini_index(
+        self,
+        left_split: np.ndarray,
+        right_split: np.ndarray,
+        classes: List[float],
+    ) -> float:
+        """
+        Calculate the Gini index for a split dataset
+        Similar to MSE but Gini index instead
+        """
+        ######################
+        ### YOUR CODE HERE ###
+        ######################
+        return 0.0
 
-# @typechecked
-# def compare_node_with_threshold(node: Node, row: np.ndarray) -> bool:
-#     """
-#     Return True if node's value > row's value (of the variable)
-#     Else False
-#     """
-#     ######################
-#     ### YOUR CODE HERE ###
-#     ######################
-#     pass
-
-
-# @typechecked
-# def predict(
-#     node: Node, row: np.ndarray, comparator: Callable[[Node, np.ndarray], bool]
-# ) -> float:
-#     ######################
-#     ### YOUR CODE HERE ###
-#     ######################
-#     pass
-
-
-# class TreeClassifier(TreeRegressor):
-#     def build_tree(self):
-#         ## Note: You can remove this if you want to use build tree from Tree Regressor
-#         ######################
-#         ### YOUR CODE HERE ###
-#         ######################
-#         pass
-
-#     @typechecked
-#     def gini_index(
-#         self,
-#         left_split: np.ndarray,
-#         right_split: np.ndarray,
-#         classes: List[float],
-#     ) -> float:
-#         """
-#         Calculate the Gini index for a split dataset
-#         Similar to MSE but Gini index instead
-#         """
-#         ######################
-#         ### YOUR CODE HERE ###
-#         ######################
-#         pass
-
-#     @typechecked
-#     def get_best_split(self, data: np.ndarray) -> Node:
-#         """
-#         Select the best split point for a dataset
-#         """
-#         classes = list(set(row[-1] for row in data))
-#         ######################
-#         ### YOUR CODE HERE ###
-#         ######################
-#         pass
+    @typechecked
+    def get_best_split(self, data: np.ndarray) -> Node:
+        """
+        Select the best split point for a dataset
+        """
+        classes = list(set(row[-1] for row in data))
+        ######################
+        ### YOUR CODE HERE ###
+        ######################
+        dummyNode = Node(0)
+        return dummyNode
 
 
 if __name__ == "__main__":
@@ -400,8 +550,8 @@ if __name__ == "__main__":
     # # # legend and title in the Plot. Any of the missing
     # # # items in plot will result in loss of points.
 
-    # #mostly ripped off from hw2
-    # #get tpr and fpr using roc_score function
+    #mostly ripped off from hw2
+    #get tpr and fpr using roc_score function
     # ridge_reg_pred = model_R.predict(x_test)
     # ridge_reg_fpr, ridge_reg_tpr, ridge_threshold = roc_curve(y_test, ridge_reg_pred)
 
@@ -440,8 +590,29 @@ if __name__ == "__main__":
     plt.ylabel("Target values, y")
     plt.show()
 
+    #testing stuff ********************************************
+    #print(data_regress.shape[0])
+
+    #print(data_regress)
+    # regressor = TreeRegressor(data_regress, 4)
+    # tree = regressor.build_tree()
+
+    # regressor.treeChecker(regressor.root_node, 1)
+
+    # mse = 0.0
+    # for data_point in data_regress:
+    #     mse += (data_point[1] - predict(tree, data_point, compare_node_with_threshold)) ** 2
+
+    # plt.figure()
+    # plt.plot()
+    # plt.xlabel("Depth")
+    # plt.ylabel("MSE")
+    # plt.show()
+    #testing stuff ********************************************
+
+
     mse_depths = []
-    for depth in range(1, 5):
+    for depth in range(1, 5): #DONT FORGET TO UNCOMMENT =
         regressor = TreeRegressor(data_regress, depth)
         tree = regressor.build_tree()
         mse = 0.0
