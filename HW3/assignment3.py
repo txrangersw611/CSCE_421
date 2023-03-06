@@ -262,7 +262,7 @@ class TreeRegressor:
             data  # last element of each row in data is the target variable
         )
         self.max_depth = max_depth  # maximum depth
-        self.root_node = Node(0, self.data)
+        self.root_node = None
 
 
     #adding this to see how the tree looks after being created
@@ -270,6 +270,7 @@ class TreeRegressor:
         print("-------------------------")
         print("Depth: ", depth)
         print("Split Value: ", node.split_val)
+        print("This node has", node.data.shape[0], "values in it.")
 
         time.sleep(1)
 
@@ -279,13 +280,22 @@ class TreeRegressor:
         if (node.right != None):
             self.treeChecker(node.right, depth+1)
 
+
     @typechecked
     def build_tree(self) -> Node:
         """
         Build the tree
         """
+        #check for if depth was 0
+        # if (self.max_depth == 0):
+        #     return Node(np.mean(self.data[:, -1]), self.data)
+
         #get the initial best split for the data so root node has a value
-        #self.root_node = self.get_best_split(self.data)
+        self.root_node = self.get_best_split(self.data)
+
+        #check for if root node was returned as None
+        # if (self.root_node == None):
+        #     return Node(np.mean(self.data[:, -1]), self.data)
 
         # print(self.root_node.left.data.shape[0])
         # print(self.root_node.right.data.shape[0])
@@ -319,18 +329,22 @@ class TreeRegressor:
         return mse
     
 
+
+
     @typechecked
     def split(self, node: Node, depth: int) -> None:
         """
         Do the split operation recursively
         """
         #check if the depth is 0. This will the the stopping case
-        if (depth == self.max_depth):
+        if (depth == self.max_depth or node.data.shape[0] == 1):
+            saveData = node.data[~np.isnan(node.data)]
+            node.split_val = np.mean(saveData[:-1])
             return
         
 
         #split the data and save the resulting node into splittedNode
-        tempnode = self.get_best_split(node, node.data)
+        tempnode = self.get_best_split(node.data)
 
         node.left = tempnode.left
         node.right = tempnode.right
@@ -344,13 +358,12 @@ class TreeRegressor:
         # print("left: ", node.left.data.shape)
         # print("right: ", node.right.data.shape)
 
-        #call split again. This will split the left and right node until the depth is reached
+        #do some checking for if the leaf is empty or only has 1 element
         self.split(node.left, depth)
         self.split(node.right, depth)
 
-
     @typechecked
-    def get_best_split(self, node: Node, data: np.ndarray) -> Node:
+    def get_best_split(self, data: np.ndarray) -> Node:
         """
         Select the best split point for a dataset AND create a Node
         """
@@ -360,7 +373,7 @@ class TreeRegressor:
         split_index = 0
         feature_index = 0
         best_mse = 1000.0
-
+        
         temp_mse = 0.0
 
         # start = 1
@@ -448,7 +461,7 @@ def compare_node_with_threshold(node: Node, row: np.ndarray) -> bool:
     Return True if node's value > row's value (of the variable)
     Else False
     """
-    if (node.split_val > row[row.shape[0]-1]):
+    if (node.split_val > row[-1]): #row[-1] should hold the label for the row
         return True
     else:
         return False
@@ -459,18 +472,18 @@ def compare_node_with_threshold(node: Node, row: np.ndarray) -> bool:
 def predict(
     node: Node, row: np.ndarray, comparator: Callable[[Node, np.ndarray], bool]
 ) -> float:
+    
     #node represents the root node of the tree, row represents the (x,y) value from the data and the comparator calls the compare function
-
     #if there is no left and right nodes then 
     if (node.left == None and node.right == None):
         #need to return the average of the values in the node
-        return np.mean(node.data[:,1])
+        return node.split_val
     
-    elif (comparator(node, row)):
-        predict(node.right, row, comparator)
+    if (comparator(node, row)):
+        return predict(node.left, row, comparator)
 
     else:
-        predict(node.left, row, comparator)
+        return predict(node.right, row, comparator)
 
     
 
@@ -499,9 +512,48 @@ class TreeClassifier(TreeRegressor):
         #need to do a summation of proportion(proportion-1) for each proportion on the left and right side then add them up
         total_vals = len(left_split) + len(right_split)
 
-        sum = np.sum(np.abs(1-left_split[:-1])) + np.sum(np.abs(1-right_split[:-1]))
+        #print(total_vals)
 
-        return sum/total_vals
+        #sum = np.sum(np.abs(1-left_split[:-1])) + np.sum(np.abs(1-right_split[:-1]))
+
+        giniSum = 0.0
+
+        #iterate over each side and get the sum from the left split then the right
+        for i in range(len(left_split)):
+            #check that its not a length of 0 bc that fucks up the base
+            if (len(left_split) == 0):
+                continue
+            
+            #calculate the prob of each class in classes for the split
+            cnt_arryL = np.zeros(len(classes))
+            for j in range(len(classes)):
+                cnt = classes[j]
+                cnt_arryL[j] = np.sum(left_split==cnt)/float(len(left_split))
+
+
+            #gini equation 1(1-prob)
+            giniSum += (1 - np.sum(cnt_arryL**2)) * (float(len(left_split))/total_vals)
+
+
+        #right part
+        
+        #iterate over each side and get the sum from the left split then the right
+        for i in range(len(right_split)):
+            #check that its not a length of 0 bc that fucks up the base
+            if (len(right_split) == 0):
+                continue
+            
+            #calculate the prob of each class in classes for the split
+            cnt_arryR = np.zeros(len(classes))
+            for j in range(len(classes)):
+                cnt = classes[j]
+                cnt_arryR[j] = np.sum(right_split==cnt)/float(len(right_split))
+
+
+            #gini equation 1(1-prob)
+            giniSum += (1 - np.sum(cnt_arryR**2)) * (float(len(right_split))/total_vals)
+
+        return giniSum
 
 
     @typechecked
@@ -623,13 +675,19 @@ if __name__ == "__main__":
     plt.show()
 
     #testing stuff ********************************************
-    #print(data_regress.shape[0])
+    # print(data_regress.shape[0])
 
     print(data_regress)
     regressor = TreeRegressor(data_regress, 4)
     tree = regressor.build_tree()
 
     regressor.treeChecker(regressor.root_node, 1)
+
+    # print(data_regress)
+    # regressor = TreeClassifier(data_regress, 5)
+    # tree = regressor.build_tree()
+
+    # regressor.treeChecker(regressor.root_node, 1)
 
     # mse = 0.0
     # for data_point in data_regress:
@@ -643,19 +701,20 @@ if __name__ == "__main__":
     #testing stuff ********************************************
 
 
-    # mse_depths = []
-    # for depth in range(1, 5): #DONT FORGET TO UNCOMMENT =
-    #     regressor = TreeRegressor(data_regress, depth)
-    #     tree = regressor.build_tree()
-    #     mse = 0.0
-    #     for data_point in data_regress:
-    #         mse += (data_point[1] - predict(tree, data_point, compare_node_with_threshold)) ** 2
-    #     mse_depths.append(mse / len(data_regress))
-    # plt.figure()
-    # plt.plot(mse_depths)
-    # plt.xlabel("Depth")
-    # plt.ylabel("MSE")
-    # plt.show()
+    mse_depths = []
+    for depth in range(1, 5): #DONT FORGET TO UNCOMMENT =
+        regressor = TreeRegressor(data_regress, depth)
+        tree = regressor.build_tree()
+        mse = 0.0
+        for data_point in data_regress:
+            mse += (data_point[1] - predict(tree, data_point, compare_node_with_threshold)) ** 2
+        mse_depths.append(mse / len(data_regress))
+    print(mse_depths)
+    plt.figure()
+    plt.plot(mse_depths)
+    plt.xlabel("Depth")
+    plt.ylabel("MSE")
+    plt.show()
 
     # # SUB Q2
     # csvname = "new_circle_data.csv"  # Place the CSV file in the same directory as this notebook
