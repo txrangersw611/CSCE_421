@@ -474,7 +474,7 @@ def predict(
 ) -> float:
     
     #node represents the root node of the tree, row represents the (x,y) value from the data and the comparator calls the compare function
-    #if there is no left and right nodes then 
+    #if there is no left and right nodes th
     if (node.left == None and node.right == None):
         #need to return the average of the values in the node
         return node.split_val
@@ -666,7 +666,7 @@ if __name__ == "__main__":
     # plt.show()
 
     # # SUB Q1
-    data_regress = np.loadtxt("noisy_sin_subsample_2.csv", delimiter=",")
+    data_regress = np.loadtxt("new_circle_data.csv", delimiter=",")
     data_regress = np.array([[x, y] for x, y in zip(*data_regress)])
     plt.figure()
     plt.scatter(data_regress[:, 0], data_regress[:, 1])
@@ -701,20 +701,20 @@ if __name__ == "__main__":
     #testing stuff ********************************************
 
 
-    mse_depths = []
-    for depth in range(1, 5): #DONT FORGET TO UNCOMMENT =
-        regressor = TreeRegressor(data_regress, depth)
-        tree = regressor.build_tree()
-        mse = 0.0
-        for data_point in data_regress:
-            mse += (data_point[1] - predict(tree, data_point, compare_node_with_threshold)) ** 2
-        mse_depths.append(mse / len(data_regress))
-    print(mse_depths)
-    plt.figure()
-    plt.plot(mse_depths)
-    plt.xlabel("Depth")
-    plt.ylabel("MSE")
-    plt.show()
+    # mse_depths = []
+    # for depth in range(1, 5): #DONT FORGET TO UNCOMMENT =
+    #     regressor = TreeRegressor(data_regress, depth)
+    #     tree = regressor.build_tree()
+    #     mse = 0.0
+    #     for data_point in data_regress:
+    #         mse += (data_point[1] - predict(tree, data_point, compare_node_with_threshold)) ** 2
+    #     mse_depths.append(mse / len(data_regress))
+    # print(mse_depths)
+    # plt.figure()
+    # plt.plot(mse_depths)
+    # plt.xlabel("Depth")
+    # plt.ylabel("MSE")
+    # plt.show()
 
     # # SUB Q2
     # csvname = "new_circle_data.csv"  # Place the CSV file in the same directory as this notebook
